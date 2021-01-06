@@ -1,13 +1,12 @@
 import React, { Component } from 'react';
 import {
-  SafeAreaView,
   StyleSheet,
   ScrollView,
   View,
   Text,
-  StatusBar,TextInput, TouchableOpacity
+  TextInput, TouchableOpacity
 } from 'react-native';
-import {Container,Content,Card} from 'native-base';
+import {Card} from 'native-base';
 import Spinner from 'react-native-loading-spinner-overlay';
 import { FlatList } from 'react-native-gesture-handler';
 const API_KEY="jEkasE2aSQg42AuAhhJImFBdnUSedUGLP4OFi5JE"
@@ -18,7 +17,8 @@ constructor(props){
         searchtext:'',
         spinner:false,
         ListArray:[],
-        IdDetails:[]
+        IdDetails:[],
+        Ismessage:false
     }
 }
 onChangeInput(text){
@@ -26,24 +26,29 @@ onChangeInput(text){
 }
 
 GetRandomAD(){
-    this.setState({spinner:true})
-return fetch ('https://api.nasa.gov/neo/rest/v1/neo/browse?api_key='+API_KEY)
-.then((response)=>response.json())
-.then((result)=>{
-this.setState({spinner:false,ListArray:result.near_earth_objects})
+    this.setState({spinner:true,Ismessage:false,searchtext:''})
+    return fetch ('https://api.nasa.gov/neo/rest/v1/neo/browse?api_key='+API_KEY)
+    .then((response)=>response.json())
+    .then((result)=>{
+    this.setState({spinner:false,ListArray:result.near_earth_objects,Ismessage:false})
+    }).catch((error)=>{
+    this.setState({Ismessage:true})
 })
 }
 GetDetails=(id)=>{
-    this.setState({spinner:true});
+    this.setState({spinner:true,ListArray:[],Ismessage:false,searchtext:id});
     return fetch ('https://api.nasa.gov/neo/rest/v1/neo/'+id+'?api_key='+API_KEY)
     .then((response)=>response.json())
     .then((result)=>{
         this.setState({spinner:false,IdDetails:result})
         if(result.code==405){
-            alert("Please enter valid id")
+            alert("Please enter valid id");
+            this.setState({spinner:false,Ismessage:false});
         }else{
-            this.props.navigate.navigate('Details',{AsteroidDetails:this.state.IdDetails})
+            this.props.navigation.navigate('Details',{AsteroidDetails:this.state.IdDetails})
         }
+    }).catch((error)=>{
+        this.setState({spinner:false,Ismessage:true})
     })
 }
 
@@ -74,7 +79,7 @@ render(){
                 visible={this.state.spinner}
                 textContent={'Loading...'}
                 textStyle={styles.spinner} />
-                <TouchableOpacity onPress={()=>this.GetIDs(this.state.searchtext)} disabled={this.state.searchtext.length<1} style={[styles.submit_button,{backgroundColor:this.state.searchtext.length<1 ? '#999' : '#0947A5'}]}>
+                <TouchableOpacity onPress={()=>this.GetDetails(this.state.searchtext)} disabled={this.state.searchtext.length<1} style={[styles.submit_button,{backgroundColor:this.state.searchtext.length<1 ? '#999' : '#0947A5'}]}>
                     <Text style={styles.Submit_text}>Submit</Text>
                 </TouchableOpacity>
             </View>
@@ -83,8 +88,14 @@ render(){
             </View>
             
            </Card>
+          
            <ScrollView style={styles.ScrollFlatlist} showsVerticalScrollIndicator={false}
             >
+                 <View style={{alignSelf:'center',marginTop:10,fontSize:20}}>
+               {this.state.Ismessage==true && 
+               <View><Text>NO RECORD FOUND</Text></View>
+               }
+           </View>
                 <FlatList 
                 data={this.state.ListArray}
                 renderItem={item=>this.renderItems(item)}

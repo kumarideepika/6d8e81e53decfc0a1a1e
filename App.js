@@ -43,7 +43,7 @@ return(
       },
       headerTintColor:'#fff'
     }} />
-    <Stack.Screen name ="Details" component={Details} option={{
+    <Stack.Screen name ="Details" component={Details} options={{
       title:'Details',
       headerStyle:{
         backgroundColor: '#0947A5'
